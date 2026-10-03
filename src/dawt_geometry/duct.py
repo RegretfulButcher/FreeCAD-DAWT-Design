@@ -1,4 +1,4 @@
-"""Builder for one configurable PARSEC duct profile."""
+"""Builder for a lower-surface PARSEC duct with an angled flange."""
 
 import math
 
@@ -7,35 +7,43 @@ from FreeCAD import Base
 
 from .config import DesignParameters
 from .freecad_helpers import checked
-from .parsec import profile
-
-
-PARSEC_DUCT = {
-    "upper": {"leading_edge_radius": 0.0162187, "crest_location": 0.376723,
-              "crest_height": 0.101977, "crest_curvature": -1.11136,
-              "trailing_edge_height": 0.0, "trailing_edge_slope_deg": -12.9184},
-    "lower": {"leading_edge_radius": 0.00748922, "crest_location": 0.360,
-              "crest_height": -0.11, "crest_curvature": 1.64354,
-              "trailing_edge_height": 0.0, "trailing_edge_slope_deg": 0.148211},
-}
+from .parsec import coefficients, surface
 
 
 def duct(parameters: DesignParameters):
-    """Build the PARSEC duct as a thin solid body."""
-    x_values, upper, lower = profile(parameters.duct_points, PARSEC_DUCT)
+    """Build a planar face from the lower PARSEC surface and angled flange."""
+    lower_parsec = {
+        "leading_edge_radius": parameters.duct_lower_leading_edge_radius,
+        "crest_location": parameters.duct_lower_crest_location,
+        "crest_height": parameters.duct_lower_crest_height,
+        "crest_curvature": parameters.duct_lower_crest_curvature,
+        "trailing_edge_height": parameters.duct_lower_trailing_edge_height,
+        "trailing_edge_slope_deg": parameters.duct_lower_trailing_edge_slope_deg,
+    }
+    x_values = [i / (parameters.duct_points - 1)
+                for i in range(parameters.duct_points)]
+    lower_coefficients = coefficients(lower_parsec, -1)
+    lower = [surface(x, lower_coefficients) for x in x_values]
     if parameters.duct_reverse:
-        upper, lower = [-value for value in upper], [-value for value in lower]
-    angle = math.tan(math.radians(parameters.duct_angle_deg))
-    top, bottom = [], []
-    for x, y_upper, y_lower in zip(x_values, upper, lower):
+        lower = [-value for value in lower]
+    bottom = []
+    for x, y_lower in zip(x_values, lower):
         axial = parameters.duct_origin_x + parameters.duct_chord * x
-        centre = parameters.duct_origin_r + parameters.duct_chord * x * angle
-        top.append(Base.Vector(axial, centre + parameters.duct_chord * y_upper, 0))
-        bottom.append(Base.Vector(axial, centre + parameters.duct_chord * y_lower, 0))
-    upper_curve, lower_curve = Part.BSplineCurve(), Part.BSplineCurve()
-    upper_curve.interpolate(top)
-    lower_curve.interpolate(list(reversed(bottom)))
-    wire = Part.Wire([upper_curve.toShape(), lower_curve.toShape()])
+        radial = parameters.duct_origin_r + parameters.duct_chord * y_lower
+        bottom.append(Base.Vector(axial, radial, 0))
+
+    lower_curve = Part.BSplineCurve()
+    lower_curve.interpolate(bottom)
+    tail = bottom[-1]
+    flange_angle = math.radians(parameters.duct_flange_angle_deg)
+    flange_end = Base.Vector(
+        tail.x + parameters.duct_flange_length * math.cos(flange_angle),
+        tail.y + parameters.duct_flange_length * math.sin(flange_angle),
+        0,
+    )
+    leading_edge = bottom[0]
+    flange = Part.LineSegment(tail, flange_end).toShape()
+    closure = Part.LineSegment(flange_end, leading_edge).toShape()
+    wire = Part.Wire([lower_curve.toShape(), flange, closure])
     face = Part.Face(wire)
-    solid = face.extrude(Base.Vector(0, 0, parameters.duct_thickness))
-    return checked(solid, "PARSEC duct solid")
+    return checked(face, "PARSEC flange face")

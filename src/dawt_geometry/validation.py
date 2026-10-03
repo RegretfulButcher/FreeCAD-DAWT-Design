@@ -10,13 +10,15 @@ def validate_parameters(parameters: DesignParameters) -> None:
         parameters.resolution_length,
         parameters.resolution_inlet_radius, parameters.actuator_radial_span,
         parameters.actuator_thickness, parameters.hub_length,
-        parameters.hub_radius, parameters.duct_chord, parameters.duct_thickness,
+        parameters.hub_radius, parameters.duct_chord, parameters.duct_flange_length,
         parameters.duct_points,
     )
     if any(value <= 0 for value in positive):
         raise ValueError("All dimensions must be positive.")
     if parameters.hub_length <= 2 * parameters.hub_radius:
         raise ValueError("hub_length must be greater than two hub radii.")
+    if not 0 < parameters.duct_lower_crest_location < 1:
+        raise ValueError("duct_lower_crest_location must be between 0 and 1.")
 
 
 def actuator_outer_radius(parameters: DesignParameters) -> float:
