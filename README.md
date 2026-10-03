@@ -101,5 +101,6 @@ module rejects impossible dimensions before FreeCAD starts building geometry.
   `duct_flange_angle_deg`, `duct_chord`, and `duct_reverse` to modify the
   planar flange face. `duct_thickness` is the full XY strip width, centered on
   the path. The flange starts at the lower PARSEC trailing edge and its angle
-  is measured from the positive x direction. The entire project is planar; no
-  geometry is extruded along `z`.
+  is measured from the positive x direction. Positive angles such as 70–90°
+  are supported without restricting the user. The entire project is planar;
+  no geometry is extruded along `z`.

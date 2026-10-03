@@ -77,6 +77,7 @@ running the script.
   lower-surface PARSEC parameters, radial reversal, chord, and origin are
   user-controlled. The path is offset by half the configured `duct_thickness`
   on both sides in the x-y plane to form a face; do not extrude any geometry
-  along `z` because this is a 2D domain.
+  along `z` because this is a 2D domain. Use the two-tangent miter at the
+  PARSEC/flange join so the offset boundaries meet without an inward notch.
 - Profile wires must be closed and valid before export.
 - The assembly must be a compound of the five individual shapes.
