@@ -21,7 +21,7 @@ PARSEC_DUCT = {
 
 
 def duct(parameters: DesignParameters):
-    """Build the single PARSEC duct with configurable chord, angle, and reversal."""
+    """Build the PARSEC duct as a thin solid body."""
     x_values, upper, lower = profile(parameters.duct_points, PARSEC_DUCT)
     if parameters.duct_reverse:
         upper, lower = [-value for value in upper], [-value for value in lower]
@@ -36,4 +36,6 @@ def duct(parameters: DesignParameters):
     upper_curve.interpolate(top)
     lower_curve.interpolate(list(reversed(bottom)))
     wire = Part.Wire([upper_curve.toShape(), lower_curve.toShape()])
-    return checked(wire, "PARSEC duct")
+    face = Part.Face(wire)
+    solid = face.extrude(Base.Vector(0, 0, parameters.duct_thickness))
+    return checked(solid, "PARSEC duct solid")

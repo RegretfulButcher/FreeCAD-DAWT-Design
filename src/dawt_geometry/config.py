@@ -25,6 +25,7 @@ class DesignParameters:
     duct_origin_x: float = -72.0
     duct_origin_r: float = 475.0
     duct_chord: float = 200.0
+    duct_thickness: float = 5.0
     duct_angle_deg: float = 0.0
     duct_reverse: bool = True
     duct_points: int = 180

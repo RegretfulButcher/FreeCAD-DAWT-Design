@@ -12,7 +12,7 @@ subtracted later in a separate CAD workflow:
    quarter-circle inlet and therefore a 900 mm height.
 3. `actuator_disk.step` — a 405 mm radial annulus and 5 mm axial thickness.
 4. `hub.step` — an 800 mm long hub with 45 mm radius and rounded ends.
-5. `duct.step` — one configurable PARSEC duct profile.
+5. `duct.step` — one configurable PARSEC duct profile extruded into a thin solid.
 6. `profile_assembly.step` — a compound containing all five profiles.
 
 All dimensions are millimetres. The actuator disk and hub share `x = 0` and
@@ -96,4 +96,5 @@ module rejects impossible dimensions before FreeCAD starts building geometry.
   the top line and perpendicular to the bottom line.
 - Set each shape's origin fields independently to move it. The actuator disk
   uses the hub's radial origin and hub radius as its inner radial constraint.
-- Set `duct_chord`, `duct_angle_deg`, and `duct_reverse` to modify the duct.
+- Set `duct_chord`, `duct_thickness`, `duct_angle_deg`, and `duct_reverse` to
+  modify the duct solid.
