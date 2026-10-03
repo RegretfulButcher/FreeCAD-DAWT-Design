@@ -1,0 +1,20 @@
+# Generated FreeCAD exports
+output/
+
+# Python bytecode and local caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environments and editor metadata
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+*.swp
+
+# macOS metadata
+.DS_Store

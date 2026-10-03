@@ -8,8 +8,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-FREECAD_COMMAND = Path(r"C:\Program Files\FreeCAD 1.1\bin\freecadcmd.exe")
-WSL_FREECAD_COMMAND = Path("/mnt/c/Program Files/FreeCAD 1.1/bin/freecadcmd.exe")
 PROJECT_DIR = (
     Path(__file__).resolve().parent
     if "__file__" in globals()
@@ -18,6 +16,34 @@ PROJECT_DIR = (
 sys.path.insert(0, str(PROJECT_DIR / "src"))
 
 from dawt_geometry.config import DesignParameters
+
+
+def freecad_candidates() -> list[Path]:
+    """Return FreeCAD command candidates for the current host platform."""
+    configured = os.environ.get("FREECADCMD")
+    candidates = [Path(configured)] if configured else []
+    if sys.platform == "darwin":
+        candidates.append(Path(
+            "/Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd"
+        ))
+    elif os.name == "nt":
+        candidates.append(Path(r"C:\Program Files\FreeCAD 1.1\bin\freecadcmd.exe"))
+    else:
+        # Native Linux installs and WSL installations are both supported.
+        candidates.extend([
+            Path("/usr/bin/freecadcmd"),
+            Path("/usr/local/bin/freecadcmd"),
+            Path("/mnt/c/Program Files/FreeCAD 1.1/bin/freecadcmd.exe"),
+        ])
+    return candidates
+
+
+def find_freecad() -> Path | None:
+    """Find an executable FreeCAD command, if one is installed."""
+    for candidate in freecad_candidates():
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate
+    return None
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -44,15 +70,16 @@ def main() -> None:
 
 def run_with_freecad() -> None:
     """Relaunch this script and explicitly execute it inside FreeCAD."""
-    command_path = WSL_FREECAD_COMMAND if os.name != "nt" else FREECAD_COMMAND
-    if not command_path.exists():
-        raise SystemExit(f"FreeCAD was not found at: {FREECAD_COMMAND}")
+    command_path = find_freecad()
+    if command_path is None:
+        searched = ", ".join(str(path) for path in freecad_candidates())
+        raise SystemExit(
+            "FreeCAD was not found. Set FREECADCMD to the freecadcmd executable "
+            f"or install it in one of: {searched}"
+        )
 
     script_path = PROJECT_DIR / "run.py"
-    script_text = str(script_path)
-    if os.name != "nt" and script_text.startswith("/mnt/c/"):
-        script_text = "C:/" + script_text[len("/mnt/c/"):]
-    script_text = script_text.replace("\\", "/")
+    script_text = script_path.as_posix()
     arguments = ["run.py", *sys.argv[1:]]
     freecad_code = (
         "import sys; "
@@ -61,7 +88,13 @@ def run_with_freecad() -> None:
         f"{script_text!r}, 'exec'))"
     )
     command = [str(command_path), "-c", freecad_code]
-    subprocess.run(command, cwd=PROJECT_DIR, check=True)
+    try:
+        subprocess.run(command, cwd=PROJECT_DIR, check=True)
+    except subprocess.CalledProcessError as error:
+        raise SystemExit(
+            f"FreeCAD exited unsuccessfully (return code {error.returncode}). "
+            "Check that the installed FreeCAD build supports this Mac."
+        ) from error
 
 
 if __name__ == "__main__":

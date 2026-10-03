@@ -33,14 +33,31 @@ profiles. Do not add boolean cuts or fusions unless explicitly requested.
 3. Keep shape construction in `profiles.py`.
 4. Keep FreeCAD API details in `freecad_helpers.py`.
 5. Keep file naming and orchestration in `build_case.py`.
-6. Run `freecadcmd run.py` and inspect the exported STEP files.
+6. Run `python3 run.py` and inspect the exported STEP files.
 
-`run.py` contains the configured FreeCAD command:
-`C:\Program Files\FreeCAD 1.1\bin\freecadcmd.exe`. When started with ordinary
-Python, it relaunches itself with this executable.
+`run.py` discovers the FreeCAD command for the host platform. On macOS the
+default is `/Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd`.
+Set `FREECADCMD` to override this path. When started with ordinary Python, the
+script relaunches itself with the discovered executable.
 
 Do not put FreeCAD imports in configuration or validation modules. This lets
 basic dimension checks run with ordinary Python.
+
+## Generated files and version control
+
+`output/` contains generated STEP exports and is intentionally ignored. Python
+bytecode, local caches, editor settings, virtual environments, and macOS
+`.DS_Store` files are also ignored. Do not commit generated exports or local
+machine metadata; commit source, documentation, and configuration changes
+only.
+
+For macOS verification, the expected FreeCAD command is:
+
+`/Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd`
+
+Run `python3 run.py --out output/macos_test` and confirm that all six STEP
+files are created. If FreeCAD is installed elsewhere, set `FREECADCMD` before
+running the script.
 
 ## Important constraints
 

@@ -20,31 +20,51 @@ the same axis, so they are coincident.
 
 ## Running
 
-The configured FreeCAD installation is:
+On macOS, the launcher uses:
 
 ```text
-C:\Program Files\FreeCAD 1.1\bin\freecadcmd.exe
+/Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd
 ```
 
-Ordinary Python automatically relaunches the generator with that executable
-and explicitly executes the script inside FreeCAD:
+Ordinary Python automatically relaunches the generator with the platform's
+FreeCAD command and explicitly executes the script inside FreeCAD. Generated
+STEP files are written to `output/`, which is intentionally ignored by Git:
 
-```powershell
-cd "C:\Project Saves\Python Codes\Design Algorithm\dawt_freecad_step_modular"
-python .\run.py
+```sh
+cd /path/to/FreeCAD-DAWT-Design
+python3 run.py
 ```
 
-When launched from WSL, the same installation is addressed through
-`/mnt/c/Program Files/FreeCAD 1.1/bin/freecadcmd.exe` automatically.
+To create a separate case, choose another output folder:
+
+```sh
+python3 run.py --out output/case_01
+```
+
+If FreeCAD is installed elsewhere, set `FREECADCMD` to the full path of its
+`freecadcmd` executable.
 
 You can also call FreeCAD directly or select another output directory:
 
-```powershell
-& "C:\Program Files\FreeCAD 1.1\bin\freecadcmd.exe" .\run.py
-python .\run.py --out output\case_01
+```sh
+/Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd run.py
+python3 run.py --out output/case_01
 ```
 
 This project contains no downstream CAD automation or launchers.
+
+The launcher supports macOS, Windows, WSL, and native Linux. Set the
+`FREECADCMD` environment variable when FreeCAD is installed outside the
+standard locations. Python bytecode, editor metadata, macOS `.DS_Store`
+files, and generated STEP output are excluded by `.gitignore`.
+
+On Apple Silicon macOS, verify the installation and generate the default
+case with:
+
+```sh
+file /Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd
+python3 run.py
+```
 
 ## Structure
 
