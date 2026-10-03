@@ -11,7 +11,7 @@ from .parsec import coefficients, surface
 
 
 def duct(parameters: DesignParameters):
-    """Build a planar face from the lower PARSEC surface and angled flange."""
+    """Build a planar strip by offsetting the lower PARSEC/flange path in XY."""
     lower_parsec = {
         "leading_edge_radius": parameters.duct_lower_leading_edge_radius,
         "crest_location": parameters.duct_lower_crest_location,
@@ -32,8 +32,6 @@ def duct(parameters: DesignParameters):
         radial = parameters.duct_origin_r + parameters.duct_chord * y_lower
         bottom.append(Base.Vector(axial, radial, 0))
 
-    lower_curve = Part.BSplineCurve()
-    lower_curve.interpolate(bottom)
     tail = bottom[-1]
     flange_angle = math.radians(parameters.duct_flange_angle_deg)
     flange_end = Base.Vector(
@@ -42,8 +40,18 @@ def duct(parameters: DesignParameters):
         0,
     )
     leading_edge = bottom[0]
-    flange = Part.LineSegment(tail, flange_end).toShape()
-    closure = Part.LineSegment(flange_end, leading_edge).toShape()
-    wire = Part.Wire([lower_curve.toShape(), flange, closure])
-    face = Part.Face(wire)
-    return checked(face, "PARSEC flange face")
+    centerline = bottom + [flange_end]
+    half_width = parameters.duct_thickness / 2
+    left, right = [], []
+    for index, point in enumerate(centerline):
+        previous = centerline[max(0, index - 1)]
+        following = centerline[min(len(centerline) - 1, index + 1)]
+        tangent = following.sub(previous)
+        tangent.normalize()
+        normal = Base.Vector(-tangent.y, tangent.x, 0)
+        left.append(point + normal * half_width)
+        right.append(point - normal * half_width)
+
+    outline = left + list(reversed(right)) + [left[0]]
+    wire = Part.makePolygon(outline)
+    return checked(Part.Face(wire), "PARSEC flange strip")

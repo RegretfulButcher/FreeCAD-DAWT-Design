@@ -12,8 +12,8 @@ subtracted later in a separate CAD workflow:
    quarter-circle inlet and therefore a 900 mm height.
 3. `actuator_disk.step` — a 405 mm radial annulus and 5 mm axial thickness.
 4. `hub.step` — an 800 mm long hub with 45 mm radius and rounded ends.
-5. `duct.step` — a planar lower-surface PARSEC flange face with an angled
-   trailing flange.
+5. `duct.step` — a planar lower-surface PARSEC/flange path offset into a
+   configurable-thickness face.
 6. `profile_assembly.step` — a compound containing all five profiles.
 
 All dimensions are millimetres. The actuator disk and hub share `x = 0` and
@@ -99,6 +99,7 @@ module rejects impossible dimensions before FreeCAD starts building geometry.
   uses the hub's radial origin and hub radius as its inner radial constraint.
 - Set the `duct_lower_*` PARSEC fields, `duct_flange_length`,
   `duct_flange_angle_deg`, `duct_chord`, and `duct_reverse` to modify the
-  planar flange face. The flange starts at the lower PARSEC trailing edge and
-  its angle is measured from the positive x direction. The entire project is
-  planar; no geometry is extruded along `z`.
+  planar flange face. `duct_thickness` is the full XY strip width, centered on
+  the path. The flange starts at the lower PARSEC trailing edge and its angle
+  is measured from the positive x direction. The entire project is planar; no
+  geometry is extruded along `z`.

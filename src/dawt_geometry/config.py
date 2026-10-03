@@ -25,6 +25,7 @@ class DesignParameters:
     duct_origin_x: float = -72.0
     duct_origin_r: float = 475.0
     duct_chord: float = 200.0
+    duct_thickness: float = 10.0
     duct_flange_length: float = 100.0
     duct_flange_angle_deg: float = -12.0
     duct_lower_leading_edge_radius: float = 0.00748922

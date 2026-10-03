@@ -22,7 +22,7 @@ not copy downstream CAD automation into this project.
 - an annular actuator-disk face;
 - an upper-half hub face with two rounded ends.
 - one configurable lower-surface PARSEC duct profile with an angled flange,
-  exported as a planar face.
+  offset into a planar face.
 
 The individual STEP files and `profile_assembly.step` contain overlapping
 profiles. Do not add boolean cuts or fusions unless explicitly requested.
@@ -75,7 +75,8 @@ running the script.
 - The duct uses the configurable lower PARSEC surface and an angled flange
   line that starts at the surface's trailing edge. The flange length and angle,
   lower-surface PARSEC parameters, radial reversal, chord, and origin are
-  user-controlled. The closed profile remains a planar face; do not extrude
-  any geometry along `z` because this is a 2D domain.
+  user-controlled. The path is offset by half the configured `duct_thickness`
+  on both sides in the x-y plane to form a face; do not extrude any geometry
+  along `z` because this is a 2D domain.
 - Profile wires must be closed and valid before export.
 - The assembly must be a compound of the five individual shapes.
