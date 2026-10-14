@@ -14,7 +14,6 @@ from .validation import validate_parameters
 def build_case(
     parameters: DesignParameters,
     output_dir: Path,
-    duct_join_mode: str = "arc",
 ) -> list[Path]:
     """Create five STEP profiles and one overlapping compound assembly."""
     validate_parameters(parameters)
@@ -23,7 +22,7 @@ def build_case(
         "resolution": resolution_section(parameters),
         "actuator": actuator_disk(parameters),
         "hub": hub(parameters),
-        "duct": duct(parameters, duct_join_mode),
+        "duct": duct(parameters),
     }
     document = make_document()
     for name, shape in shapes.items():

@@ -11,72 +11,9 @@ from .freecad_helpers import checked
 from .duct_curve import coefficients, surface
 
 
-def _line_intersection(first, first_direction, second, second_direction):
-    """Return the intersection point of two non-parallel offset lines."""
-    cross = (first_direction.x * second_direction.y
-             - first_direction.y * second_direction.x)
-    if abs(cross) < 1e-12:
-        raise ValueError("Curve and flange directions are parallel at their join.")
-    delta = second.sub(first)
-    distance = (delta.x * second_direction.y
-                - delta.y * second_direction.x) / cross
-    return first + first_direction * distance
-
-
-def _intersection_join_wire(points, flange_end, half_width):
-    """Build a mitered closed offset wire with rounded ends."""
-    tail = points[-1]
-    left, right = [], []
-    for index, point in enumerate(points):
-        previous = points[max(0, index - 1)]
-        following = points[min(len(points) - 1, index + 1)]
-        tangent = following.sub(previous)
-        tangent.normalize()
-        normal = Base.Vector(-tangent.y, tangent.x, 0)
-        left.append(point + normal * half_width)
-        right.append(point - normal * half_width)
-
-    curve_tangent = tail.sub(points[-2])
-    curve_tangent.normalize()
-    flange_tangent = flange_end.sub(tail)
-    flange_tangent.normalize()
-    curve_normal = Base.Vector(-curve_tangent.y, curve_tangent.x, 0)
-    flange_normal = Base.Vector(-flange_tangent.y, flange_tangent.x, 0)
-    left_miter = _line_intersection(
-        tail + curve_normal * half_width, curve_tangent,
-        tail + flange_normal * half_width, flange_tangent,
-    )
-    right_miter = _line_intersection(
-        tail - curve_normal * half_width, curve_tangent,
-        tail - flange_normal * half_width, flange_tangent,
-    )
-    left[-1], right[-1] = left_miter, right_miter
-
-    left_flange_end = flange_end + flange_normal * half_width
-    right_flange_end = flange_end - flange_normal * half_width
-    start_tangent = points[1].sub(points[0])
-    start_tangent.normalize()
-    start_mid = points[0] - start_tangent * half_width
-    end_mid = flange_end + flange_tangent * half_width
-
-    left_curve = Part.BSplineCurve()
-    right_curve = Part.BSplineCurve()
-    left_curve.interpolate(left)
-    right_curve.interpolate(list(reversed(right)))
-    wire = Part.Wire([
-        left_curve.toShape(),
-        Part.LineSegment(left_miter, left_flange_end).toShape(),
-        Part.Arc(left_flange_end, end_mid, right_flange_end).toShape(),
-        Part.LineSegment(right_flange_end, right_miter).toShape(),
-        right_curve.toShape(),
-        Part.Arc(right[0], start_mid, left[0]).toShape(),
-    ])
-    return checked(wire, "intersection-mode duct boundary")
-
-
 def _edge_samples(edge):
-    """Discretize one boundary edge while keeping its exact endpoints."""
-    count = max(3, min(80, int(edge.Length / 2) + 3))
+    """Discretize one boundary edge finely while keeping its endpoints."""
+    count = max(3, min(4000, int(edge.Length / 0.25) + 3))
     return list(edge.discretize(Number=count))
 
 
@@ -158,8 +95,8 @@ def _surface_filled_face(document, wire, start_center, end_center, half_width):
     return checked(filling.Shape.copy(), "Surface Filling duct face")
 
 
-def duct(parameters: DesignParameters, join_mode: str = "arc"):
-    """Build a filled duct face with selectable arc or intersection joins."""
+def duct(parameters: DesignParameters):
+    """Build a filled duct face using FreeCAD's default arc offset joins."""
     lower_curve = {
         "crest_location": parameters.duct_lower_crest_location,
         "crest_height": parameters.duct_lower_crest_height,
@@ -194,33 +131,21 @@ def duct(parameters: DesignParameters, join_mode: str = "arc"):
         Part.LineSegment(tail, flange_end).toShape(),
     ])
 
-    if join_mode not in {"arc", "intersection"}:
-        raise ValueError(
-            "duct offset join mode must be 'arc' or 'intersection'."
-        )
-
     document = App.newDocument("temporary_duct_offset")
     try:
         source = document.addObject("Part::Feature", "DuctCenterPath")
         source.Shape = path
-        if join_mode == "arc":
-            offset = document.addObject("Part::Offset2D", "DuctOffset")
-            offset.Source = source
-            offset.Value = parameters.duct_thickness / 2
-            offset.Mode = 1  # Pipe mode adds round caps to the open path.
-            offset.Join = 0  # Arc joins.
-            offset.Fill = False
-            document.recompute()
-            if offset.Shape.isNull() or not offset.Shape.isValid():
-                raise RuntimeError("FreeCAD could not create the arc offset wire.")
-            outline = offset.Shape.Wires[0].copy()
-            document.removeObject(offset.Name)
-        else:
-            # FreeCAD's intersection join returns a null shape for this spline
-            # path, so construct the equivalent sharp miter and round end caps.
-            outline = _intersection_join_wire(
-                points, flange_end, parameters.duct_thickness / 2
-            )
+        offset = document.addObject("Part::Offset2D", "DuctOffset")
+        offset.Source = source
+        offset.Value = parameters.duct_thickness / 2
+        offset.Mode = 1  # Pipe mode adds round caps to the open path.
+        offset.Join = 0  # Arc joins.
+        offset.Fill = False
+        document.recompute()
+        if offset.Shape.isNull() or not offset.Shape.isValid():
+            raise RuntimeError("FreeCAD could not create the arc offset wire.")
+        outline = offset.Shape.Wires[0].copy()
+        document.removeObject(offset.Name)
         # Delete the original center path before filling the copied outline.
         document.removeObject(source.Name)
         result = _surface_filled_face(

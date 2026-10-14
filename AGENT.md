@@ -82,11 +82,9 @@ running the script.
   the x-y plane and filled into a face; do not extrude any geometry along `z`
   because this is a 2D domain. Create one open wire from the curve
   and flange in a temporary document, then create a closed offset boundary.
-  Arc mode uses native `Part::Offset2D` Pipe mode; Intersection mode uses a
-  sharp miter at the curve/flange join and rounded end caps because FreeCAD's
-  native intersection offset returns null for this spline. The user selects
-  the join with `-m`/`--mode` (Arc is the default). Merge the outline into four
-  boundary curves for `Surface::Filling`, then delete the original center path
-  before exporting the resulting face.
+  Use native `Part::Offset2D` Pipe mode with FreeCAD's default arc joins and
+  rounded end caps. Merge the outline into four boundary curves for
+  `Surface::Filling`, then delete the original center path before exporting the
+  resulting face.
 - Profile wires must be closed and valid before export.
 - The assembly must be a compound of the five individual shapes.

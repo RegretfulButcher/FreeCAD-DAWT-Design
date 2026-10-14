@@ -44,15 +44,6 @@ To create a separate case, choose another output folder:
 python3 run.py --out output/case_01
 ```
 
-Choose how FreeCAD joins the offset edges at corners with `-m` (`arc` is the
-default and rounds the open ends; `intersection` extends neighboring offsets
-to their sharp intersection):
-
-```sh
-python3 run.py -m arc
-python3 run.py -m intersection --out output/sharp_case
-```
-
 If FreeCAD is installed elsewhere, set `FREECADCMD` to the full path of its
 `freecadcmd` executable.
 
@@ -111,8 +102,8 @@ module rejects impossible dimensions before FreeCAD starts building geometry.
 - Set the `duct_lower_crest_*` and trailing-edge fields, `duct_flange_length`,
   `duct_flange_angle_deg`, `duct_chord`, and `duct_reverse` to modify the
   planar flange face. `duct_thickness` is the full XY strip width, centered on
-  the path. Arc mode uses FreeCAD's default 2D offset join, including its arc
-  joins and round caps at both open-path ends. The resulting boundary is merged
+  the path. The duct uses FreeCAD's default 2D arc offset join, including its
+  round caps at both open-path ends. The resulting boundary is merged
   into four curves and filled with Surface Filling. The five curve coefficients are solved
   from the crest height,
   crest location and curvature, plus the trailing-edge height and slope. The
