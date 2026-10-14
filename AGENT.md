@@ -15,14 +15,14 @@ not copy downstream CAD automation into this project.
 
 ## Geometry contract
 
-`profiles.py` provides four independent profiles:
+`profiles.py` provides five independent profiles:
 
 - a rectangular outer domain;
 - a curved resolution-section face with no hub cutout;
 - an annular actuator-disk face;
-- an upper-half hub face with two rounded ends.
-- one configurable lower-surface PARSEC duct profile with an angled flange,
-  offset into a planar face.
+- an upper-half hub face with two rounded ends;
+- one configurable five-term lower duct curve with an angled flange,
+  offset into a filled planar face.
 
 The individual STEP files and `profile_assembly.step` contain overlapping
 profiles. Do not add boolean cuts or fusions unless explicitly requested.
@@ -72,12 +72,21 @@ running the script.
 - The default actuator and hub axial origins are coincident at `x = 0`.
   The actuator radial position is always constrained to the hub's radial
   origin plus the hub radius; it has no independent radial origin.
-- The duct uses the configurable lower PARSEC surface and an angled flange
+- The duct uses a five-term polynomial (`x` through `x^5`) and an angled flange
   line that starts at the surface's trailing edge. The flange length and angle,
-  lower-surface PARSEC parameters, radial reversal, chord, and origin are
-  user-controlled. The path is offset by half the configured `duct_thickness`
-  on both sides in the x-y plane to form a face; do not extrude any geometry
-  along `z` because this is a 2D domain. Use the two-tangent miter at the
-  PARSEC/flange join so the offset boundaries meet without an inward notch.
+  curve's crest and trailing-edge parameters, radial reversal, chord, and origin
+  are user-controlled. Its five coefficients are solved from the trailing-edge
+  height and slope plus the specified crest location, height, and curvature.
+  Integer powers give the curve finite slope and curvature at the leading edge.
+  The path is offset by half the configured `duct_thickness` on both sides in
+  the x-y plane and filled into a face; do not extrude any geometry along `z`
+  because this is a 2D domain. Create one open wire from the curve
+  and flange in a temporary document, then create a closed offset boundary.
+  Arc mode uses native `Part::Offset2D` Pipe mode; Intersection mode uses a
+  sharp miter at the curve/flange join and rounded end caps because FreeCAD's
+  native intersection offset returns null for this spline. The user selects
+  the join with `-m`/`--mode` (Arc is the default). Merge the outline into four
+  boundary curves for `Surface::Filling`, then delete the original center path
+  before exporting the resulting face.
 - Profile wires must be closed and valid before export.
 - The assembly must be a compound of the five individual shapes.

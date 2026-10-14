@@ -25,15 +25,14 @@ class DesignParameters:
     duct_origin_x: float = -72.0
     duct_origin_r: float = 475.0
     duct_chord: float = 200.0
-    duct_thickness: float = 2.0
+    duct_thickness: float = 5.0
     duct_flange_length: float = 200.0
     duct_flange_angle_deg: float = 80.0
-    duct_lower_leading_edge_radius: float = 0.00748922
     duct_lower_crest_location: float = 0.360
     duct_lower_crest_height: float = -0.11
     duct_lower_crest_curvature: float = 1.64354
     duct_lower_trailing_edge_height: float = 0.0
-    duct_lower_trailing_edge_slope_deg: float = 0.148211
+    duct_lower_trailing_edge_slope_deg: float = -20
     duct_reverse: bool = False
     duct_points: int = 180
 

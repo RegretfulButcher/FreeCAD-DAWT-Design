@@ -47,9 +47,15 @@ def find_freecad() -> Path | None:
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Read command-line options for the output folder."""
+    """Read output-folder and duct offset-join options."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="output", help="STEP output folder")
+    parser.add_argument(
+        "-m", "--mode", "--offset-mode",
+        choices=("arc", "intersection"),
+        default="arc",
+        help="duct offset joins: rounded arcs or sharp intersections (default: arc)",
+    )
     return parser.parse_args()
 
 
@@ -63,7 +69,7 @@ def main() -> None:
             return
         raise
     args = parse_arguments()
-    paths = build_case(DesignParameters(), PROJECT_DIR / args.out)
+    paths = build_case(DesignParameters(), PROJECT_DIR / args.out, args.mode)
     for path in paths:
         print(f"Created: {path}")
 

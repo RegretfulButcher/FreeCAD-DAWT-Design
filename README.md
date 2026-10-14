@@ -12,8 +12,10 @@ subtracted later in a separate CAD workflow:
    quarter-circle inlet and therefore a 900 mm height.
 3. `actuator_disk.step` — a 405 mm radial annulus and 5 mm axial thickness.
 4. `hub.step` — an 800 mm long hub with 45 mm radius and rounded ends.
-5. `duct.step` — a planar lower-surface PARSEC/flange path offset into a
-   configurable-thickness face.
+5. `duct.step` — a planar lower-duct/flange path offset into a surface-filled
+   face with configurable thickness and rounded end caps. Its contour uses a
+   five-term polynomial in `x` through `x^5`, with finite slope and curvature
+   at the leading edge.
 6. `profile_assembly.step` — a compound containing all five profiles.
 
 All dimensions are millimetres. The actuator disk and hub share `x = 0` and
@@ -40,6 +42,15 @@ To create a separate case, choose another output folder:
 
 ```sh
 python3 run.py --out output/case_01
+```
+
+Choose how FreeCAD joins the offset edges at corners with `-m` (`arc` is the
+default and rounds the open ends; `intersection` extends neighboring offsets
+to their sharp intersection):
+
+```sh
+python3 run.py -m arc
+python3 run.py -m intersection --out output/sharp_case
 ```
 
 If FreeCAD is installed elsewhere, set `FREECADCMD` to the full path of its
@@ -78,8 +89,8 @@ dawt_freecad_step_modular/
     ├── config.py                  # dimensions and output names
     ├── validation.py              # simple design checks
     ├── profiles.py                # domain, resolution, disk, and hub
-    ├── parsec.py                  # PARSEC coefficient math
-    ├── duct.py                    # one PARSEC duct profile
+    ├── duct_curve.py              # five-term curve coefficient math
+    ├── duct.py                    # lower duct contour and flange
     ├── freecad_helpers.py         # document and STEP helpers
     └── build_case.py              # orchestration
 ```
@@ -97,10 +108,15 @@ module rejects impossible dimensions before FreeCAD starts building geometry.
   the top line and perpendicular to the bottom line.
 - Set each shape's origin fields independently to move it. The actuator disk
   uses the hub's radial origin and hub radius as its inner radial constraint.
-- Set the `duct_lower_*` PARSEC fields, `duct_flange_length`,
+- Set the `duct_lower_crest_*` and trailing-edge fields, `duct_flange_length`,
   `duct_flange_angle_deg`, `duct_chord`, and `duct_reverse` to modify the
   planar flange face. `duct_thickness` is the full XY strip width, centered on
-  the path. The flange starts at the lower PARSEC trailing edge and its angle
+  the path. Arc mode uses FreeCAD's default 2D offset join, including its arc
+  joins and round caps at both open-path ends. The resulting boundary is merged
+  into four curves and filled with Surface Filling. The five curve coefficients are solved
+  from the crest height,
+  crest location and curvature, plus the trailing-edge height and slope. The
+  flange starts at the lower curve's trailing edge and its angle
   is measured from the positive x direction. Positive angles such as 70–90°
   are supported without restricting the user. The entire project is planar;
   no geometry is extruded along `z`.
