@@ -25,5 +25,9 @@ def validate_parameters(parameters: DesignParameters) -> None:
         raise ValueError("sector_angle_deg must be between 0 and 360 degrees.")
     if parameters.turbine_blade_count < 1:
         raise ValueError("turbine_blade_count must be positive.")
+    if parameters.turbine_airfoil_points < 3:
+        raise ValueError("turbine_airfoil_points must be at least three.")
+    if parameters.turbine_airfoil_tanh_beta < 0:
+        raise ValueError("turbine_airfoil_tanh_beta must be nonnegative.")
     if abs(parameters.sector_angle_deg * parameters.turbine_blade_count - 360) > 1e-8:
         raise ValueError("The periodic sector angle must match the turbine blade count.")

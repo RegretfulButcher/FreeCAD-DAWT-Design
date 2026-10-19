@@ -68,11 +68,27 @@ def _surface(x, coefficients):
                for index, value in enumerate(coefficients))
 
 
-def profile(points):
-    """Return a closed Selig-ordered normalized contour as (x, y) pairs."""
+def profile(points, tanh_beta=2.0):
+    """Return a tanh-spaced Selig contour clustered at both chord ends."""
+    if points < 3:
+        raise ValueError("An airfoil profile requires at least three points per side.")
+    if tanh_beta < 0:
+        raise ValueError("tanh_beta must be nonnegative.")
+
+    if tanh_beta == 0:
+        x_values = [index / (points - 1) for index in range(points)]
+    else:
+        scale = math.tanh(tanh_beta)
+        x_values = [
+            0.5 * (1 + math.tanh(
+                tanh_beta * (2 * index / (points - 1) - 1)
+            ) / scale)
+            for index in range(points)
+        ]
+        x_values[0], x_values[-1] = 0.0, 1.0
+
     upper = _coefficients(PARSEC["upper"], 1)
     lower = _coefficients(PARSEC["lower"], -1)
-    xs = [index / (points - 1) for index in range(points)]
-    contour = [(x, _surface(x, upper)) for x in reversed(xs)]
-    contour.extend((x, _surface(x, lower)) for x in xs[1:])
+    contour = [(x, _surface(x, upper)) for x in reversed(x_values)]
+    contour.extend((x, _surface(x, lower)) for x in x_values[1:])
     return contour

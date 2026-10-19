@@ -18,9 +18,15 @@ S826-like fallback. The airfoiltools coordinate file was not available during
 this implementation. The blade loft is intended as a geometry-generation
 test and uses the PARSEC contour at each NTNU span station.
 
-The blade root transitions from a circular section into the first NTNU airfoil
-station. The circular section is carried radially to the hub surface, with a
-7.5 mm default shaft radius configurable in `DesignParameters`.
+The blade root uses a ruled, linear loft from the circular shaft through the
+first NTNU airfoil station. The circular section reaches the hub surface, with
+a 7.5 mm default shaft radius configurable in `DesignParameters`.
+
+Airfoil samples use a symmetric tanh distribution with a default beta of 2.0,
+clustering points near both the leading and trailing edges. Change
+`turbine_airfoil_points` or `turbine_airfoil_tanh_beta` in `DesignParameters`
+to adjust section resolution and clustering strength; beta zero gives uniform
+spacing.
 
 ## Generate STEP files
 

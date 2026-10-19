@@ -21,6 +21,7 @@ class DesignParameters:
     turbine_origin_x: float = -2.5
     turbine_blade_count: int = 3
     turbine_airfoil_points: int = 61
+    turbine_airfoil_tanh_beta: float = 2.0
     turbine_root_shaft_radius: float = 7.5
     hub_length: float = 800.0
     hub_radius: float = 45.0
