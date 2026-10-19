@@ -88,7 +88,7 @@ def _root_circle(parameters, radius, twist_deg):
 
 
 def turbine_blade(parameters: DesignParameters, stations_path: Path = NTNU_GEOMETRY):
-    """Loft one blade into a round root and extend its shaft to the hub."""
+    """Build a turbine split at the configured NTNU root end station."""
     stations = _stations(stations_path)
     if stations[-1][0] > parameters.rotor_radius:
         raise ValueError("NTNU blade tip extends beyond the configured rotor radius.")
@@ -101,7 +101,10 @@ def turbine_blade(parameters: DesignParameters, stations_path: Path = NTNU_GEOME
     section_edge_counts = {len(section.Edges) for section in blade_sections}
     if len(section_edge_counts) != 1:
         raise RuntimeError("NTNU airfoil sections do not have matching edge counts.")
-    blade = Part.makeLoft(blade_sections, True, False)
+    root_end_index = parameters.turbine_root_end_section - 1
+    # Both solids share the selected section. With section two, section one is
+    # skipped and the root loft runs directly from the shaft to section two.
+    blade = Part.makeLoft(blade_sections[root_end_index:], True, False)
 
     # Keep the root transition as a separate solid in the turbine STEP.
     root_circle = _root_circle(parameters, root_station, stations[0][2])
@@ -110,9 +113,9 @@ def turbine_blade(parameters: DesignParameters, stations_path: Path = NTNU_GEOME
     if len(root_circle.Edges) != expected_edges or len(hub_circle.Edges) != expected_edges:
         raise RuntimeError("Circular root sections do not match the airfoil edge count.")
 
-    # Ruled faces give a direct, piecewise linear root transition.
+    # Ruled faces keep the shaft-to-selected-section root part linear.
     root = Part.makeLoft(
-        [root_circle, hub_circle, blade_sections[0]], True, True
+        [root_circle, hub_circle, blade_sections[root_end_index]], True, True
     )
     checked(root, "NTNU turbine linear root transition")
     turbine = Part.makeCompound([blade, root])

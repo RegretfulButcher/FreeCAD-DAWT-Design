@@ -6,6 +6,7 @@ import argparse
 import os
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 PROJECT_DIR = (
@@ -50,6 +51,10 @@ def parse_arguments() -> argparse.Namespace:
     """Read the output-folder option."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="output", help="STEP output folder")
+    parser.add_argument(
+        "--root-end-section", type=int, choices=(1, 2), default=None,
+        help="NTNU section where the linear root loft ends (default: 1)",
+    )
     return parser.parse_args()
 
 
@@ -63,7 +68,12 @@ def main() -> None:
             return
         raise
     args = parse_arguments()
-    paths = build_case(DesignParameters(), PROJECT_DIR / args.out)
+    parameters = DesignParameters()
+    if args.root_end_section is not None:
+        parameters = replace(
+            parameters, turbine_root_end_section=args.root_end_section
+        )
+    paths = build_case(parameters, PROJECT_DIR / args.out)
     for path in paths:
         print(f"Created: {path}")
 

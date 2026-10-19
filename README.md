@@ -18,9 +18,13 @@ S826-like fallback. The airfoiltools coordinate file was not available during
 this implementation. The blade loft is intended as a geometry-generation
 test and uses the PARSEC contour at each NTNU span station.
 
-The blade root uses a ruled, linear loft from the circular shaft through the
-first NTNU airfoil station. The circular section reaches the hub surface, with
-a 7.5 mm default shaft radius configurable in `DesignParameters`.
+By default, the turbine is split at the first NTNU airfoil station, matching
+the committed design. Set `turbine_root_end_section` to `2`, or pass
+`--root-end-section 2`, to skip the first station and loft the root directly
+from the circular shaft to the second station. Both options use a ruled,
+linear root loft, and the upper blade loft starts at the selected station. The
+circular section reaches the hub surface, with a 7.5 mm default shaft radius
+configurable in `DesignParameters`.
 
 Airfoil samples use a symmetric tanh distribution with a default beta of 2.0,
 clustering points near both the leading and trailing edges. Change
@@ -37,6 +41,9 @@ Generated files are written to ignored `output/`. To use another folder, run:
 ```sh
 python run.py --out output/case_01
 ```
+
+To generate the optional section-two root design, run
+`python run.py --out output/section_2 --root-end-section 2`.
 
 The exported shapes are:
 
