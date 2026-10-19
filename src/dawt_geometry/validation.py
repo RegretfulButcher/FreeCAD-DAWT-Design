@@ -8,8 +8,8 @@ def validate_parameters(parameters: DesignParameters) -> None:
     positive = (
         parameters.domain_length, parameters.domain_height,
         parameters.resolution_length,
-        parameters.resolution_inlet_radius, parameters.actuator_radial_span,
-        parameters.actuator_thickness, parameters.hub_length,
+        parameters.resolution_inlet_radius, parameters.rotor_radius,
+        parameters.hub_length,
         parameters.hub_radius, parameters.duct_chord, parameters.duct_thickness,
         parameters.duct_flange_length,
         parameters.duct_points,
@@ -20,8 +20,9 @@ def validate_parameters(parameters: DesignParameters) -> None:
         raise ValueError("hub_length must be greater than two hub radii.")
     if not 0 < parameters.duct_lower_crest_location < 1:
         raise ValueError("duct_lower_crest_location must be between 0 and 1.")
-
-
-def actuator_outer_radius(parameters: DesignParameters) -> float:
-    """Return the actuator outer radius from hub radius plus radial span."""
-    return parameters.hub_radius + parameters.actuator_radial_span
+    if not 0 < parameters.sector_angle_deg < 360:
+        raise ValueError("sector_angle_deg must be between 0 and 360 degrees.")
+    if parameters.turbine_blade_count < 1:
+        raise ValueError("turbine_blade_count must be positive.")
+    if abs(parameters.sector_angle_deg * parameters.turbine_blade_count - 360) > 1e-8:
+        raise ValueError("The periodic sector angle must match the turbine blade count.")

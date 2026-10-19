@@ -7,7 +7,6 @@ from FreeCAD import Base
 
 from .config import DesignParameters
 from .freecad_helpers import checked
-from .validation import actuator_outer_radius
 
 
 def rectangle(parameters: DesignParameters):
@@ -39,18 +38,6 @@ def resolution_section(parameters: DesignParameters):
         Part.LineSegment(bottom_right, bottom_left).toShape(),
     ]
     return checked(Part.Face(Part.Wire(edges)), "resolution section")
-
-
-def actuator_disk(parameters: DesignParameters):
-    """Build the 405 by 5 mm annular actuator disk."""
-    x = parameters.actuator_origin_x
-    r0 = parameters.hub_origin_r + parameters.hub_radius
-    r1 = parameters.hub_origin_r + actuator_outer_radius(parameters)
-    half = parameters.actuator_thickness / 2
-    points = [Base.Vector(x - half, r0, 0), Base.Vector(x - half, r1, 0),
-              Base.Vector(x + half, r1, 0), Base.Vector(x + half, r0, 0)]
-    return checked(Part.Face(Part.makePolygon(points + [points[0]])),
-                   "actuator disk")
 
 
 def hub(parameters: DesignParameters):

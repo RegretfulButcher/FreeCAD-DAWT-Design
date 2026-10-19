@@ -1,6 +1,7 @@
 """User-editable dimensions and output names."""
 
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -15,9 +16,11 @@ class DesignParameters:
     resolution_inlet_radius: float = 900.0
     resolution_origin_x: float = -900.0
     resolution_origin_r: float = 0.0
-    actuator_radial_span: float = 405.0
-    actuator_thickness: float = 5.0
-    actuator_origin_x: float = -2.5
+    sector_angle_deg: float = 120.0
+    rotor_radius: float = 450.0
+    turbine_origin_x: float = -2.5
+    turbine_blade_count: int = 3
+    turbine_airfoil_points: int = 61
     hub_length: float = 800.0
     hub_radius: float = 45.0
     hub_origin_x: float = 335.0
@@ -38,10 +41,13 @@ class DesignParameters:
 
 
 OUTPUT_NAMES = {
-    "domain": "outer_domain.step",
-    "resolution": "resolution_section.step",
-    "actuator": "actuator_disk.step",
-    "hub": "hub.step",
-    "duct": "duct.step",
-    "assembly": "profile_assembly.step",
+    "domain": "outer_domain_sector.step",
+    "resolution": "resolution_sector.step",
+    "hub": "hub_sector.step",
+    "duct": "duct_sector.step",
+    "turbine": "ntnu_turbine_blade.step",
+    "assembly": "periodic_domain_assembly.step",
 }
+
+RESOURCE_DIR = Path(__file__).resolve().parents[2] / "resources"
+NTNU_GEOMETRY = RESOURCE_DIR / "ntnu_geometry.csv"

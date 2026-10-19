@@ -1,90 +1,33 @@
 # Maintenance guide
 
-This folder generates the independent 2D profiles needed for the DAWT
-axisymmetric CFD workflow. It is a replacement project beside the original
-`dawt_freecad_step` folder. Keep the original available for reference, but do
-not copy downstream CAD automation into this project.
+This project creates overlapping STEP geometry for a 120-degree periodic
+three-dimensional DAWT CFD sector. The x-r axisymmetric profiles are revolved
+around the x axis from -60 to +60 degrees. The turbine blade is a 3D loft from
+the NTNU station table. Keep each component independent for subtraction in
+SpaceClaim; the assembly is a compound, with no booleans.
 
-## Coordinate system
+## Coordinate and unit conventions
 
-- `x` is the axial direction.
-- `r` is the radial direction and is represented by FreeCAD's `y` coordinate.
-- All geometry is in millimetres.
-- The axis is `r = 0`.
-- The hub centre and actuator-disk centre are both `x = 0`.
+- `x` is the axial direction and `r` is radial distance from the x axis.
+- The x-r profiles use FreeCAD's x-y plane; revolving about x creates the
+  sector in y-z.
+- All FreeCAD geometry uses millimetres.
+- `resources/ntnu_geometry.csv` stores radius and chord in metres and twist
+  in degrees, as in OpTurbo's CFD table.
+- One blade is exported as the periodic representative of the three-blade
+  turbine, centered on the sector bisector.
 
-## Geometry contract
+## Geometry and workflow
 
-`profiles.py` provides five independent profiles:
+- `profiles.py` builds the outer domain, resolution region, and hub profiles.
+- `duct.py` builds the lower duct profile.
+- `turbine.py` reads the NTNU table and lofts the radial blade sections.
+- `airfoil.py` provides the existing PARSEC section as an S826-like fallback.
+- `build_case.py` revolves each axisymmetric profile by 120 degrees and exports
+  every overlapping shape plus a compound assembly.
+- No actuator disk is built or exported.
+- Use `config.py` for dimensions and `validation.py` for dimension checks.
+- Run `python run.py` using FreeCAD's Python command to produce STEP exports.
+  `output/` is generated and ignored by Git.
 
-- a rectangular outer domain;
-- a curved resolution-section face with no hub cutout;
-- an annular actuator-disk face;
-- an upper-half hub face with two rounded ends;
-- one configurable five-term lower duct curve with an angled flange,
-  offset into a filled planar face.
-
-The individual STEP files and `profile_assembly.step` contain overlapping
-profiles. Do not add boolean cuts or fusions unless explicitly requested.
-
-## Editing workflow
-
-1. Change dimensions in `config.py`.
-2. Add or update checks in `validation.py`.
-3. Keep shape construction in `profiles.py`.
-4. Keep FreeCAD API details in `freecad_helpers.py`.
-5. Keep file naming and orchestration in `build_case.py`.
-6. Run `python3 run.py` and inspect the exported STEP files.
-
-`run.py` discovers the FreeCAD command for the host platform. On macOS the
-default is `/Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd`.
-Set `FREECADCMD` to override this path. When started with ordinary Python, the
-script relaunches itself with the discovered executable.
-
-Do not put FreeCAD imports in configuration or validation modules. This lets
-basic dimension checks run with ordinary Python.
-
-## Generated files and version control
-
-`output/` contains generated STEP exports and is intentionally ignored. Python
-bytecode, local caches, editor settings, virtual environments, and macOS
-`.DS_Store` files are also ignored. Do not commit generated exports or local
-machine metadata; commit source, documentation, and configuration changes
-only.
-
-For macOS verification, the expected FreeCAD command is:
-
-`/Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd`
-
-Run `python3 run.py --out output/macos_test` and confirm that all six STEP
-files are created. If FreeCAD is installed elsewhere, set `FREECADCMD` before
-running the script.
-
-## Important constraints
-
-- The resolution section is 1350 mm long. Its height is always derived from
-  `resolution_inlet_radius`, so there is no separate height parameter. The
-  inlet arc is tangent to the top edge and perpendicular to the bottom edge.
-- The actuator radial span is 405 mm from the 45 mm hub radius to the
-  450 mm outer radius.
-- The actuator thickness is 5 mm.
-- The hub length must be greater than twice its radius.
-- The default actuator and hub axial origins are coincident at `x = 0`.
-  The actuator radial position is always constrained to the hub's radial
-  origin plus the hub radius; it has no independent radial origin.
-- The duct uses a five-term polynomial (`x` through `x^5`) and an angled flange
-  line that starts at the surface's trailing edge. The flange length and angle,
-  curve's crest and trailing-edge parameters, radial reversal, chord, and origin
-  are user-controlled. Its five coefficients are solved from the trailing-edge
-  height and slope plus the specified crest location, height, and curvature.
-  Integer powers give the curve finite slope and curvature at the leading edge.
-  The path is offset by half the configured `duct_thickness` on both sides in
-  the x-y plane and filled into a face; do not extrude any geometry along `z`
-  because this is a 2D domain. Create one open wire from the curve
-  and flange in a temporary document, then create a closed offset boundary.
-  Use native `Part::Offset2D` Pipe mode with FreeCAD's default arc joins and
-  rounded end caps. Merge the outline into four boundary curves for
-  `Surface::Filling`, then delete the original center path before exporting the
-  resulting face.
-- Profile wires must be closed and valid before export.
-- The assembly must be a compound of the five individual shapes.
+Keep generated files and local machine metadata out of version control.
