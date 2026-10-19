@@ -18,6 +18,10 @@ S826-like fallback. The airfoiltools coordinate file was not available during
 this implementation. The blade loft is intended as a geometry-generation
 test and uses the PARSEC contour at each NTNU span station.
 
+The blade root transitions from a circular section into the first NTNU airfoil
+station. The circular section is carried radially to the hub surface, with a
+7.5 mm default shaft radius configurable in `DesignParameters`.
+
 ## Generate STEP files
 
 Run `python run.py` from this directory. The launcher finds FreeCAD on Windows,

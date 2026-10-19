@@ -23,6 +23,8 @@ SpaceClaim; the assembly is a compound, with no booleans.
 - `duct.py` builds the lower duct profile.
 - `turbine.py` reads the NTNU table and lofts the radial blade sections.
 - `airfoil.py` provides the existing PARSEC section as an S826-like fallback.
+- The turbine STEP contains the NTNU blade and a circular root transition.
+  Its round section reaches the hub surface; its radius is configurable.
 - `build_case.py` revolves each axisymmetric profile by 120 degrees and exports
   every overlapping shape plus a compound assembly.
 - No actuator disk is built or exported.

@@ -44,15 +44,41 @@ def _section(parameters, radius, chord, twist_deg):
     return Part.Wire(Part.makePolygon(points + [points[0]]).Edges)
 
 
+def _root_circle(parameters, radius):
+    """Make the circular radial section at the inboard end of the loft."""
+    count = 2 * parameters.turbine_airfoil_points - 1
+    center_y = parameters.hub_origin_r + radius
+    points = [Base.Vector(
+        parameters.turbine_origin_x + parameters.turbine_root_shaft_radius * math.cos(
+            2 * math.pi * index / count
+        ),
+        center_y,
+        parameters.turbine_root_shaft_radius * math.sin(2 * math.pi * index / count),
+    ) for index in range(count)]
+    return Part.Wire(Part.makePolygon(points + [points[0]]).Edges)
+
+
 def turbine_blade(parameters: DesignParameters, stations_path: Path = NTNU_GEOMETRY):
-    """Loft one blade, the periodic representative of the three-blade rotor."""
+    """Loft one blade into a round root and extend its shaft to the hub."""
     stations = _stations(stations_path)
     if stations[-1][0] > parameters.rotor_radius:
         raise ValueError("NTNU blade tip extends beyond the configured rotor radius.")
-    if stations[0][0] >= parameters.hub_radius:
-        radius, chord, twist = stations[0]
-        stations.insert(0, (parameters.hub_radius - 5.0, chord, twist))
-    sections = [_section(parameters, radius, chord, twist)
-                for radius, chord, twist in stations]
-    blade = Part.makeLoft(sections, True, False)
-    return checked(blade, "NTNU turbine blade loft")
+    first_spacing = stations[1][0] - stations[0][0]
+    root_station = stations[0][0] - first_spacing
+    if root_station >= parameters.hub_radius:
+        raise ValueError("The circular blade root must lie inside the hub radius.")
+    blade_sections = [_section(parameters, radius, chord, twist)
+                      for radius, chord, twist in stations]
+    blade = Part.makeLoft(blade_sections, True, False)
+
+    # Keep the short root transition as a separate solid in the turbine STEP.
+    # Its two equal circular sections make a straight shaft reaching the hub;
+    # its outer section lofts into the first NTNU airfoil station.
+    root_sections = [
+        _root_circle(parameters, root_station),
+        _root_circle(parameters, parameters.hub_radius),
+        blade_sections[0],
+    ]
+    root = Part.makeLoft(root_sections, True, False)
+    turbine = Part.makeCompound([blade, root])
+    return checked(turbine, "NTNU turbine blade and root shaft")

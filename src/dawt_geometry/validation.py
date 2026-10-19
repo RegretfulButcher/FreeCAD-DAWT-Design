@@ -10,7 +10,8 @@ def validate_parameters(parameters: DesignParameters) -> None:
         parameters.resolution_length,
         parameters.resolution_inlet_radius, parameters.rotor_radius,
         parameters.hub_length,
-        parameters.hub_radius, parameters.duct_chord, parameters.duct_thickness,
+        parameters.hub_radius, parameters.turbine_root_shaft_radius,
+        parameters.duct_chord, parameters.duct_thickness,
         parameters.duct_flange_length,
         parameters.duct_points,
     )
