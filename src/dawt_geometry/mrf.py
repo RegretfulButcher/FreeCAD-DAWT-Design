@@ -65,18 +65,24 @@ def mrf_zone(parameters: DesignParameters, duct_profile):
                                radius + offset_distance * nr))
 
     offset_surface.sort()
-    # Bound the zone by the duct's lower airfoil section, stopping at the
-    # airfoil-to-flange root junction rather than following the flange tip.
-    x_start = parameters.duct_origin_x
-    x_end = parameters.duct_origin_x + parameters.duct_chord
+    # The base bounds span the duct's lower airfoil section, stopping at its
+    # flange-root junction. Optional lengths extend either end at fixed radius.
+    airfoil_x_start = parameters.duct_origin_x
+    airfoil_x_end = airfoil_x_start + parameters.duct_chord
+    x_start = airfoil_x_start - parameters.mrf_min_extension
+    x_end = airfoil_x_end + parameters.mrf_max_extension
     if x_end <= x_start or len(offset_surface) < 2:
         raise RuntimeError("Could not determine the duct's axial extent for MRF.")
 
-    upper = [(x_start, _interpolate_radius(offset_surface, x_start))]
+    airfoil_start_radius = _interpolate_radius(offset_surface, airfoil_x_start)
+    airfoil_end_radius = _interpolate_radius(offset_surface, airfoil_x_end)
+    upper = [(x_start, airfoil_start_radius)]
+    upper.append((airfoil_x_start, airfoil_start_radius))
     upper.extend((x_value, radius)
                  for x_value, radius in offset_surface
-                 if x_start < x_value < x_end)
-    upper.append((x_end, _interpolate_radius(offset_surface, x_end)))
+                 if airfoil_x_start < x_value < airfoil_x_end)
+    upper.append((airfoil_x_end, airfoil_end_radius))
+    upper.append((x_end, airfoil_end_radius))
     if min(radius for _, radius in upper) <= 0:
         raise ValueError("The MRF clearance offset crosses the rotation axis.")
 

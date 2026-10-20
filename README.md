@@ -10,9 +10,11 @@ domain sector, resolution sector, hub sector, duct sector, MRF zone, and one
 turbine blade representing the 120-degree periodic sector. The MRF zone reaches
 the axis, spans the duct's lower airfoil section from its leading edge to the
 airfoil-to-flange root junction, and follows that lower surface with a
-configurable clearance (`mrf_clearance`, 5 mm by default). No actuator disk is
-included, and no boolean subtraction is performed; subtract the overlapping
-components in SpaceClaim as before.
+configurable clearance (`mrf_clearance`, 5 mm by default). The upstream and
+downstream extensions default to 10 mm and 20 mm. Their upper edges stay at
+constant radius, parallel to the axis. No actuator disk is included, and no
+boolean subtraction is performed; subtract the overlapping components in
+SpaceClaim as before.
 
 ## Airfoil section
 
@@ -47,6 +49,13 @@ python run.py --out output/case_01
 
 To generate the optional section-two root design, run
 `python run.py --out output/section_2 --root-end-section 2`.
+
+MRF extension lengths are configurable in `DesignParameters` or on the command
+line, for example:
+
+```sh
+python run.py --out output/mrf_extended --mrf-min-extension 10 --mrf-max-extension 20
+```
 
 The exported shapes are:
 

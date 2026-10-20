@@ -55,6 +55,14 @@ def parse_arguments() -> argparse.Namespace:
         "--root-end-section", type=int, choices=(1, 2), default=None,
         help="NTNU section where the linear root loft ends (default: 1)",
     )
+    parser.add_argument(
+        "--mrf-min-extension", type=float, default=None,
+        help="Upstream MRF extension length in millimetres",
+    )
+    parser.add_argument(
+        "--mrf-max-extension", type=float, default=None,
+        help="Downstream MRF extension length in millimetres",
+    )
     return parser.parse_args()
 
 
@@ -69,10 +77,15 @@ def main() -> None:
         raise
     args = parse_arguments()
     parameters = DesignParameters()
+    overrides = {}
     if args.root_end_section is not None:
-        parameters = replace(
-            parameters, turbine_root_end_section=args.root_end_section
-        )
+        overrides["turbine_root_end_section"] = args.root_end_section
+    if args.mrf_min_extension is not None:
+        overrides["mrf_min_extension"] = args.mrf_min_extension
+    if args.mrf_max_extension is not None:
+        overrides["mrf_max_extension"] = args.mrf_max_extension
+    if overrides:
+        parameters = replace(parameters, **overrides)
     paths = build_case(parameters, PROJECT_DIR / args.out)
     for path in paths:
         print(f"Created: {path}")

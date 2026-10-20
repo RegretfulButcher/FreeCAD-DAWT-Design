@@ -42,6 +42,8 @@ class DesignParameters:
     duct_reverse: bool = False
     duct_points: int = 180
     mrf_clearance: float = 5.0
+    mrf_min_extension: float = 10.0
+    mrf_max_extension: float = 20.0
 
 
 OUTPUT_NAMES = {

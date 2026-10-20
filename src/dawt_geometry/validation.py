@@ -1,5 +1,7 @@
 """Dimension checks that do not require FreeCAD."""
 
+import math
+
 from .config import DesignParameters
 
 
@@ -31,5 +33,8 @@ def validate_parameters(parameters: DesignParameters) -> None:
         raise ValueError("turbine_airfoil_tanh_beta must be nonnegative.")
     if parameters.turbine_root_end_section not in (1, 2):
         raise ValueError("turbine_root_end_section must be 1 or 2.")
+    mrf_extensions = (parameters.mrf_min_extension, parameters.mrf_max_extension)
+    if any(not math.isfinite(value) or value < 0 for value in mrf_extensions):
+        raise ValueError("MRF axial extensions must be finite and nonnegative.")
     if abs(parameters.sector_angle_deg * parameters.turbine_blade_count - 360) > 1e-8:
         raise ValueError("The periodic sector angle must match the turbine blade count.")
