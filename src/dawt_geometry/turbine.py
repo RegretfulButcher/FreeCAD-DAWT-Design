@@ -38,13 +38,21 @@ def _airfoil_contour(parameters):
     return points
 
 
+def _spline_edge(points):
+    """Interpolate one airfoil side as a single smooth CAD edge."""
+    curve = Part.BSplineCurve()
+    curve.interpolate(points)
+    return curve.toShape()
+
+
 def _section(parameters, radius, chord, twist_deg):
     """Make a closed radial section with chord along the azimuthal direction."""
     angle = math.radians(twist_deg)
     chord_x, chord_z = math.sin(angle), math.cos(angle)
     normal_x, normal_z = math.cos(angle), -math.sin(angle)
+    contour = _airfoil_contour(parameters)
     points = []
-    for x, y in _airfoil_contour(parameters):
+    for x, y in contour:
         along = (x - 0.25) * chord
         thickness = y * chord
         points.append(Base.Vector(
@@ -52,39 +60,35 @@ def _section(parameters, radius, chord, twist_deg):
             parameters.hub_origin_r + radius,
             along * chord_z + thickness * normal_z,
         ))
-    return Part.Wire(Part.makePolygon(points + [points[0]]).Edges)
+    leading_edge = min(range(len(contour)), key=lambda index: contour[index][0])
+    upper = _spline_edge(points[:leading_edge + 1])
+    lower_points = [points[leading_edge], *points[leading_edge + 1:], points[0]]
+    lower = _spline_edge(lower_points)
+    return Part.Wire([upper, lower])
 
 
 def _root_circle(parameters, radius, twist_deg):
-    """Make a circle with the airfoil contour's normalized point progression."""
-    contour = _airfoil_contour(parameters)
-    segment_lengths = [math.dist(contour[index], contour[index + 1])
-                       for index in range(len(contour) - 1)]
-    perimeter = sum(segment_lengths) + math.dist(contour[-1], contour[0])
-    if perimeter <= 0:
-        raise ValueError("The turbine airfoil contour has zero perimeter.")
-
-    fractions = [0.0]
-    cumulative = 0.0
-    for length in segment_lengths:
-        cumulative += length
-        fractions.append(cumulative / perimeter)
-
+    """Make a smooth circular wire with upper/lower edges matching sections."""
     angle = math.radians(twist_deg)
     chord_x, chord_z = math.sin(angle), math.cos(angle)
     normal_x, normal_z = math.cos(angle), -math.sin(angle)
     center_y = parameters.hub_origin_r + radius
-    points = []
-    for fraction in fractions:
-        theta = 2 * math.pi * fraction
+
+    def circle_point(theta):
         along = parameters.turbine_root_shaft_radius * math.cos(theta)
         thickness = parameters.turbine_root_shaft_radius * math.sin(theta)
-        points.append(Base.Vector(
+        return Base.Vector(
             parameters.turbine_origin_x + along * chord_x + thickness * normal_x,
             center_y,
             along * chord_z + thickness * normal_z,
-        ))
-    return Part.Wire(Part.makePolygon(points + [points[0]]).Edges)
+        )
+
+    samples_per_half = max(16, parameters.turbine_airfoil_points - 1)
+    upper_points = [circle_point(math.pi * index / samples_per_half)
+                    for index in range(samples_per_half + 1)]
+    lower_points = [circle_point(math.pi + math.pi * index / samples_per_half)
+                    for index in range(samples_per_half + 1)]
+    return Part.Wire([_spline_edge(upper_points), _spline_edge(lower_points)])
 
 
 def turbine_blade(parameters: DesignParameters, stations_path: Path = NTNU_GEOMETRY):
