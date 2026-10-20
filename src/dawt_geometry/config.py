@@ -24,6 +24,7 @@ class DesignParameters:
     turbine_airfoil_tanh_beta: float = 2.0
     turbine_root_end_section: int = 1
     turbine_root_shaft_radius: float = 7.5
+    turbine_hub_clearance: float = 1.0
     hub_length: float = 800.0
     hub_radius: float = 45.0
     hub_origin_x: float = 335.0

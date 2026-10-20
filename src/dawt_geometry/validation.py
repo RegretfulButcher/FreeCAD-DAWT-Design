@@ -33,6 +33,8 @@ def validate_parameters(parameters: DesignParameters) -> None:
         raise ValueError("turbine_airfoil_tanh_beta must be nonnegative.")
     if parameters.turbine_root_end_section not in (1, 2):
         raise ValueError("turbine_root_end_section must be 1 or 2.")
+    if not math.isfinite(parameters.turbine_hub_clearance) or parameters.turbine_hub_clearance < 0:
+        raise ValueError("turbine_hub_clearance must be finite and nonnegative.")
     mrf_extensions = (parameters.mrf_min_extension, parameters.mrf_max_extension)
     if any(not math.isfinite(value) or value < 0 for value in mrf_extensions):
         raise ValueError("MRF axial extensions must be finite and nonnegative.")

@@ -46,6 +46,13 @@ def _lower_duct_boundary(duct_profile):
     return unique
 
 
+def _spline_edge(points):
+    """Interpolate one offset boundary as a single smooth CAD edge."""
+    curve = Part.BSplineCurve()
+    curve.interpolate(points)
+    return curve.toShape()
+
+
 def mrf_zone(parameters: DesignParameters, duct_profile):
     """Make an x-r MRF profile reaching the axis with duct clearance above it."""
     lower_surface = _lower_duct_boundary(duct_profile)
@@ -86,10 +93,22 @@ def mrf_zone(parameters: DesignParameters, duct_profile):
     if min(radius for _, radius in upper) <= 0:
         raise ValueError("The MRF clearance offset crosses the rotation axis.")
 
-    profile_points = [(x_start, 0.0), (x_end, 0.0)]
-    profile_points.extend(reversed(upper))
-    wire = Part.Wire(Part.makePolygon([
-        Base.Vector(x_value, radius, 0)
-        for x_value, radius in profile_points + [profile_points[0]]
-    ]).Edges)
+    upper_points = [Base.Vector(x_value, radius, 0)
+                    for x_value, radius in upper]
+    unique_upper = []
+    for point in upper_points:
+        if not unique_upper or point.sub(unique_upper[-1]).Length > 1e-7:
+            unique_upper.append(point)
+    if len(unique_upper) < 2:
+        raise RuntimeError("The MRF duct-clearance boundary has insufficient points.")
+
+    axis_start = Base.Vector(x_start, 0, 0)
+    axis_end = Base.Vector(x_end, 0, 0)
+    upper_edge = _spline_edge(list(reversed(unique_upper)))
+    wire = Part.Wire([
+        Part.makeLine(axis_start, axis_end),
+        Part.makeLine(axis_end, unique_upper[-1]),
+        upper_edge,
+        Part.makeLine(unique_upper[0], axis_start),
+    ])
     return checked(Part.Face(wire), "MRF zone profile")

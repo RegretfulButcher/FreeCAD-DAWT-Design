@@ -99,7 +99,7 @@ def turbine_blade(parameters: DesignParameters, stations_path: Path = NTNU_GEOME
     first_spacing = stations[1][0] - stations[0][0]
     root_station = stations[0][0] - first_spacing
     if root_station >= parameters.hub_radius:
-        raise ValueError("The circular blade root must lie inside the hub radius.")
+        raise ValueError("The circular blade shaft must extend into the hub radius.")
     blade_sections = [_section(parameters, radius, chord, twist)
                       for radius, chord, twist in stations]
     section_edge_counts = {len(section.Edges) for section in blade_sections}
@@ -111,13 +111,18 @@ def turbine_blade(parameters: DesignParameters, stations_path: Path = NTNU_GEOME
     blade = Part.makeLoft(blade_sections[root_end_index:], True, False)
 
     # Keep the root transition as a separate solid in the turbine STEP.
+    raised_hub_station = parameters.hub_radius + parameters.turbine_hub_clearance
+    if raised_hub_station >= stations[root_end_index][0]:
+        raise ValueError("The turbine hub clearance reaches the selected blade section.")
     root_circle = _root_circle(parameters, root_station, stations[0][2])
-    hub_circle = _root_circle(parameters, parameters.hub_radius, stations[0][2])
+    hub_circle = _root_circle(parameters, raised_hub_station, stations[0][2])
     expected_edges = len(blade_sections[0].Edges)
-    if len(root_circle.Edges) != expected_edges or len(hub_circle.Edges) != expected_edges:
+    if (len(root_circle.Edges) != expected_edges
+            or len(hub_circle.Edges) != expected_edges):
         raise RuntimeError("Circular root sections do not match the airfoil edge count.")
 
-    # Ruled faces keep the shaft-to-selected-section root part linear.
+    # Keep the shaft inserted into the hub, with its upper circular guide 1 mm
+    # above the hub surface by default. Ruled faces preserve the linear form.
     root = Part.makeLoft(
         [root_circle, hub_circle, blade_sections[root_end_index]], True, True
     )
