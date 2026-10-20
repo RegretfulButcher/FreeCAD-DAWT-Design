@@ -1,0 +1,89 @@
+"""Build an axis-to-duct-clearance profile for the rotating MRF zone."""
+
+import math
+
+import Part
+from FreeCAD import Base
+
+from .config import DesignParameters
+from .freecad_helpers import checked
+
+
+def _interpolate_radius(points, x_value):
+    """Linearly interpolate or extend a monotonic x-r boundary."""
+    if x_value <= points[0][0]:
+        first, second = points[0], points[1]
+    elif x_value >= points[-1][0]:
+        first, second = points[-2], points[-1]
+    else:
+        for first, second in zip(points, points[1:]):
+            if first[0] <= x_value <= second[0]:
+                break
+    fraction = (x_value - first[0]) / (second[0] - first[0])
+    return first[1] + fraction * (second[1] - first[1])
+
+
+def _lower_duct_boundary(duct_profile):
+    """Select and sample the long duct edge nearest the axis."""
+    candidates = sorted(duct_profile.Edges, key=lambda edge: edge.Length,
+                       reverse=True)[:2]
+    if len(candidates) != 2:
+        raise RuntimeError("Could not identify both long duct surface edges.")
+    edge = min(
+        candidates,
+        key=lambda item: sum(point.y for point in item.discretize(Number=300))
+        / 300,
+    )
+    count = max(300, min(4000, int(edge.Length / 0.25) + 2))
+    points = sorted((point.x, point.y)
+                    for point in edge.discretize(Number=count))
+    unique = []
+    for point in points:
+        if not unique or point[0] - unique[-1][0] > 1e-8:
+            unique.append(point)
+    if len(unique) < 2:
+        raise RuntimeError("The lower duct surface has insufficient samples.")
+    return unique
+
+
+def mrf_zone(parameters: DesignParameters, duct_profile):
+    """Make an x-r MRF profile reaching the axis with duct clearance above it."""
+    lower_surface = _lower_duct_boundary(duct_profile)
+    offset_distance = parameters.mrf_clearance
+    offset_surface = []
+    for index, (x_value, radius) in enumerate(lower_surface):
+        previous = lower_surface[max(0, index - 1)]
+        following = lower_surface[min(len(lower_surface) - 1, index + 1)]
+        dx = following[0] - previous[0]
+        dr = following[1] - previous[1]
+        length = math.hypot(dx, dr)
+        if length <= 1e-12:
+            continue
+        # Samples are ordered in increasing x; this normal points toward r=0.
+        nx, nr = dr / length, -dx / length
+        offset_surface.append((x_value + offset_distance * nx,
+                               radius + offset_distance * nr))
+
+    offset_surface.sort()
+    # Bound the zone by the duct's lower airfoil section, stopping at the
+    # airfoil-to-flange root junction rather than following the flange tip.
+    x_start = parameters.duct_origin_x
+    x_end = parameters.duct_origin_x + parameters.duct_chord
+    if x_end <= x_start or len(offset_surface) < 2:
+        raise RuntimeError("Could not determine the duct's axial extent for MRF.")
+
+    upper = [(x_start, _interpolate_radius(offset_surface, x_start))]
+    upper.extend((x_value, radius)
+                 for x_value, radius in offset_surface
+                 if x_start < x_value < x_end)
+    upper.append((x_end, _interpolate_radius(offset_surface, x_end)))
+    if min(radius for _, radius in upper) <= 0:
+        raise ValueError("The MRF clearance offset crosses the rotation axis.")
+
+    profile_points = [(x_start, 0.0), (x_end, 0.0)]
+    profile_points.extend(reversed(upper))
+    wire = Part.Wire(Part.makePolygon([
+        Base.Vector(x_value, radius, 0)
+        for x_value, radius in profile_points + [profile_points[0]]
+    ]).Edges)
+    return checked(Part.Face(wire), "MRF zone profile")

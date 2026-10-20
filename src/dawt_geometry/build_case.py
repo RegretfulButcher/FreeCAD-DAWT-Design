@@ -8,6 +8,7 @@ from FreeCAD import Base
 from .config import DesignParameters, OUTPUT_NAMES
 from .freecad_helpers import add_shape, export_shape, make_document
 from .duct import duct
+from .mrf import mrf_zone
 from .profiles import hub, rectangle, resolution_section
 from .turbine import turbine_blade
 from .validation import validate_parameters
@@ -38,6 +39,7 @@ def build_case(
         "hub": hub(parameters),
         "duct": duct(parameters),
     }
+    profiles["mrf"] = mrf_zone(parameters, profiles["duct"])
     shapes = {name: _periodic_sector(shape, parameters, name)
               for name, shape in profiles.items()}
     shapes["turbine"] = turbine_blade(parameters)
@@ -47,7 +49,7 @@ def build_case(
     assembly = Part.makeCompound(list(shapes.values()))
     add_shape(document, "profile_assembly", assembly)
     document.recompute()
-    names = ("domain", "resolution", "hub", "duct", "turbine")
+    names = ("domain", "resolution", "hub", "duct", "mrf", "turbine")
     paths = [export_shape(shapes[name], output_dir / OUTPUT_NAMES[name])
              for name in names]
     paths.append(export_shape(assembly, output_dir / OUTPUT_NAMES["assembly"]))

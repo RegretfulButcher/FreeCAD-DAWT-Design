@@ -6,8 +6,11 @@ axis from -60 to +60 degrees. A true 3D NTNU turbine blade is lofted through
 the radius, chord, and twist stations in `resources/ntnu_geometry.csv`.
 
 The assembly is a compound of independent components. It contains the outer
-domain sector, resolution sector, hub sector, duct sector, and one turbine
-blade representing the 120-degree periodic sector. No actuator disk is
+domain sector, resolution sector, hub sector, duct sector, MRF zone, and one
+turbine blade representing the 120-degree periodic sector. The MRF zone reaches
+the axis, spans the duct's lower airfoil section from its leading edge to the
+airfoil-to-flange root junction, and follows that lower surface with a
+configurable clearance (`mrf_clearance`, 5 mm by default). No actuator disk is
 included, and no boolean subtraction is performed; subtract the overlapping
 components in SpaceClaim as before.
 
@@ -51,5 +54,6 @@ The exported shapes are:
 - `resolution_sector.step`
 - `hub_sector.step`
 - `duct_sector.step`
+- `mrf_zone_sector.step`
 - `ntnu_turbine_blade.step`
 - `periodic_domain_assembly.step`

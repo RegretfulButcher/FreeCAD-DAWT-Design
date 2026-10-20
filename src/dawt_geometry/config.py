@@ -41,6 +41,7 @@ class DesignParameters:
     duct_lower_trailing_edge_slope_deg: float = -5.335
     duct_reverse: bool = False
     duct_points: int = 180
+    mrf_clearance: float = 5.0
 
 
 OUTPUT_NAMES = {
@@ -48,6 +49,7 @@ OUTPUT_NAMES = {
     "resolution": "resolution_sector.step",
     "hub": "hub_sector.step",
     "duct": "duct_sector.step",
+    "mrf": "mrf_zone_sector.step",
     "turbine": "ntnu_turbine_blade.step",
     "assembly": "periodic_domain_assembly.step",
 }

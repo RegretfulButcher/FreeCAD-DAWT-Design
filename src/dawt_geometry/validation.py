@@ -13,7 +13,7 @@ def validate_parameters(parameters: DesignParameters) -> None:
         parameters.hub_radius, parameters.turbine_root_shaft_radius,
         parameters.duct_chord, parameters.duct_thickness,
         parameters.duct_flange_length,
-        parameters.duct_points,
+        parameters.duct_points, parameters.mrf_clearance,
     )
     if any(value <= 0 for value in positive):
         raise ValueError("All dimensions must be positive.")
